@@ -1,0 +1,34 @@
+name: 'determine-docker-tag'
+description: 'Determine docker tag from git'
+inputs:
+  defaultbranch:
+    description: 'The name of the default branch (usually main or master)'
+    required: false
+    default: 'main'
+outputs:
+  tag:
+    description: "The docker tag to use"
+    value: ${{ steps.tag.outputs.tag }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.7
+      with:
+        versionSpec: '5.x'
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.7
+    - name: Build Version Tag
+      id: tag
+      run: |
+        if [[ ${{ github.ref }} == refs/tags/v* ]]; then
+          # e.g. 0.2.0
+          echo "::set-output name=tag::${{ steps.gitversion.outputs.majorMinorPatch }}"
+        elif [[ ${{ github.ref }} == refs/heads/main ]]; then
+          # e.g. 0.2.0-rc.6
+          echo "::set-output name=tag::${{ steps.gitversion.outputs.majorMinorPatch }}-rc.${{ steps.gitversion.outputs.commitsSinceVersionSource }}"
+        else
+          # e.g. 0.2.0-dev.20220817103000-PullRequest0035.5
+          echo "::set-output name=tag::${{ steps.gitversion.outputs.majorMinorPatch }}-dev.$(date +'%Y%m%d%H%M%S')${{ steps.gitversion.outputs.preReleaseTagWithDash }}"
+        fi
