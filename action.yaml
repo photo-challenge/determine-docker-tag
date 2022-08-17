@@ -21,6 +21,7 @@ runs:
       uses: gittools/actions/gitversion/execute@v0.9.7
     - name: Build Version Tag
       id: tag
+      shell: bash
       run: |
         if [[ ${{ github.ref }} == refs/tags/v* ]]; then
           # e.g. 0.2.0
